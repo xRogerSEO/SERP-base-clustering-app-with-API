@@ -101,63 +101,66 @@ def main():
     # API Key input
     api_key = st.text_input("Enter your SERPAPI API key:")
 
-    # File upload section
-    uploaded_file = st.file_uploader("Upload CSV file", type=['csv', 'xlsx'])
+    if api_key:
+        # File upload section
+        uploaded_file = st.file_uploader("Upload CSV file", type=['csv', 'xlsx'])
 
-    if uploaded_file is not None:
-        df = pd.read_excel(uploaded_file) if uploaded_file.name.endswith('xlsx') else pd.read_csv(uploaded_file)
+        if uploaded_file is not None:
+            df = pd.read_excel(uploaded_file) if uploaded_file.name.endswith('xlsx') else pd.read_csv(uploaded_file)
 
-        st.write("Data Sample:")
-        st.write(df.head())
+            st.write("Data Sample:")
+            st.write(df.head())
 
-        # Dropdown for selecting keyword column
-        keyword_column = st.selectbox("Select the column containing keywords or queries:", df.columns)
+            # Dropdown for selecting keyword column
+            keyword_column = st.selectbox("Select the column containing keywords or queries:", df.columns)
 
-        # Clean data
-        cleaned_df = clean_excel_data(uploaded_file, keyword_column)
+            # Start processing
+            if st.button("Start Processing"):
+                # Clean data
+                cleaned_df = clean_excel_data(uploaded_file, keyword_column)
 
-        st.write("Cleaned Data Sample:")
-        st.write(cleaned_df.head())
+                st.write("Cleaned Data Sample:")
+                st.write(cleaned_df.head())
 
-        # Batch Name
-        batch_name = st.text_input("Enter batch name:")
+                # Batch Name
+                batch_name = st.text_input("Enter batch name:")
 
-        # Start processing
-        if st.button("Start Processing") and api_key:
-            batch_id = create_batch(batch_name, api_key)
-            st.write("Batch ID:", batch_id)
-            time.sleep(1)
+                # Start processing
+                if st.button("Start Processing"):
+                    batch_id = create_batch(batch_name, api_key)
+                    st.write("Batch ID:", batch_id)
+                    time.sleep(1)
 
-            add_search_queries(batch_id, cleaned_df, api_key)
-            st.write('Added Search Queries to the ValueSERP Batch')
-            time.sleep(1)
+                    add_search_queries(batch_id, cleaned_df, api_key)
+                    st.write('Added Search Queries to the ValueSERP Batch')
+                    time.sleep(1)
 
-            start_batch(batch_id, api_key)
-            st.write('Started the ValueSERP Batch')
-            st.write('Waiting for SERP Results')
+                    start_batch(batch_id, api_key)
+                    st.write('Started the ValueSERP Batch')
+                    st.write('Waiting for SERP Results')
 
-            result_set = get_result_set(batch_id, api_key)
-            st.write('SERP Scraping Successful.')
+                    result_set = get_result_set(batch_id, api_key)
+                    st.write('SERP Scraping Successful.')
 
-            cleaned_results = clean_search_results(result_set)
-            st.write('Cleaned Results')
+                    cleaned_results = clean_search_results(result_set)
+                    st.write('Cleaned Results')
 
-            merged_df = pd.merge(cleaned_df, cleaned_results, how='left', on='query')
-            merged_df = merged_df.rename(columns={'query': 'Keyword', 'impressions': 'Volume', 'links': 'URLs'})
+                    merged_df = pd.merge(cleaned_df, cleaned_results, how='left', on='query')
+                    merged_df = merged_df.rename(columns={'query': 'Keyword', 'impressions': 'Volume', 'links': 'URLs'})
 
-            clusters_df_cloud = get_clusters_from_api(merged_df)
+                    clusters_df_cloud = get_clusters_from_api(merged_df)
 
-            if clusters_df_cloud is not None:
-                st.write("Clusters Data:")
-                st.write(clusters_df_cloud.head())
+                    if clusters_df_cloud is not None:
+                        st.write("Clusters Data:")
+                        st.write(clusters_df_cloud.head())
 
-                # Visualization
-                st.write("Visualization:")
-                fig = px.treemap(clusters_df_cloud[clusters_df_cloud['Number of Keywords in Cluster'] > 3],
-                                 path=['Cluster Name', 'Keyword'])
-                st.plotly_chart(fig)
-        elif not api_key:
-            st.warning("Please enter your API key.")
+                        # Visualization
+                        st.write("Visualization:")
+                        fig = px.treemap(clusters_df_cloud[clusters_df_cloud['Number of Keywords in Cluster'] > 3],
+                                         path=['Cluster Name', 'Keyword'])
+                        st.plotly_chart(fig)
+    else:
+        st.warning("Please enter your API key.")
 
 if __name__ == '__main__':
     main()
