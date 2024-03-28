@@ -98,6 +98,9 @@ def get_clusters_from_api(serp_df, common_num=4):
 def main():
     st.title("SERP Based Clustering APP w/API")
 
+    # API Key input
+    api_key = st.text_input("Enter your ValueSERP API key:")
+
     # File upload section
     uploaded_file = st.file_uploader("Upload CSV file", type=['csv', 'xlsx'])
 
@@ -113,14 +116,11 @@ def main():
         st.write("Cleaned Data Sample:")
         st.write(cleaned_df.head())
 
-        # API Key input
-        api_key = st.text_input("Enter your ValueSERP API key:")
-
         # Batch Name
         batch_name = st.text_input("Enter batch name:")
 
         # Start processing
-        if st.button("Start Processing"):
+        if st.button("Start Processing") and api_key:
             batch_id = create_batch(batch_name, api_key)
             st.write("Batch ID:", batch_id)
             time.sleep(1)
@@ -153,6 +153,8 @@ def main():
                 fig = px.treemap(clusters_df_cloud[clusters_df_cloud['Number of Keywords in Cluster'] > 3],
                                  path=['Cluster Name', 'Keyword'])
                 st.plotly_chart(fig)
+        elif not api_key:
+            st.warning("Please enter your API key.")
 
 if __name__ == '__main__':
     main()
