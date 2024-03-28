@@ -111,7 +111,7 @@ def main():
         keyword_column = st.selectbox("Select the column containing keywords or queries:", df.columns)
 
         # API Key input
-        api_key = st.text_input("Enter your ValueSERP API key:")
+        api_key = st.text_input("Enter your SERPAPI API key:")
 
         # Clean data
         cleaned_df = clean_excel_data(uploaded_file, keyword_column)
