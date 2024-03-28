@@ -8,10 +8,14 @@ import plotly.express as px
 # Function to clean Excel data
 def clean_excel_data(uploaded_file, keyword_column):
     if uploaded_file is not None:
-        if uploaded_file.name.endswith('xlsx'):
-            terms_df = pd.read_excel(uploaded_file, engine='openpyxl')
-        else:
-            terms_df = pd.read_csv(uploaded_file)
+        try:
+            if uploaded_file.name.endswith('xlsx'):
+                terms_df = pd.read_excel(uploaded_file, engine='openpyxl')
+            else:
+                terms_df = pd.read_csv(uploaded_file)
+        except pd.errors.EmptyDataError:
+            st.error("The uploaded file is empty. Please upload a valid CSV file.")
+            return None
         
         if keyword_column not in terms_df.columns:
             st.error(f"Selected keyword column '{keyword_column}' does not exist in the uploaded file. Please select a different column.")
