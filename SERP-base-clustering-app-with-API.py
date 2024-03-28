@@ -84,9 +84,7 @@ def get_clusters_from_api(serp_df, common_num=4):
 
 # Streamlit App
 def main():
-    st.title("GSC Queries Race Chart Visualization")
-
-    # File upload section
+   # File upload section
     uploaded_file = st.file_uploader("Upload CSV file", type=['csv', 'xlsx'])
 
     if uploaded_file is not None:
