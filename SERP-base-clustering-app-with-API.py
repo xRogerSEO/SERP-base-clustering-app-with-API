@@ -98,6 +98,9 @@ def get_clusters_from_api(serp_df, common_num=4):
 def main():
     st.title("SERP Based Clustering APP w/API")
 
+    # API Key input
+    api_key = st.text_input("Enter your SERPAPI API key:")
+
     # File upload section
     uploaded_file = st.file_uploader("Upload CSV file", type=['csv', 'xlsx'])
 
@@ -109,9 +112,6 @@ def main():
 
         # Dropdown for selecting keyword column
         keyword_column = st.selectbox("Select the column containing keywords or queries:", df.columns)
-
-        # API Key input
-        api_key = st.text_input("Enter your SERPAPI API key:")
 
         # Clean data
         cleaned_df = clean_excel_data(uploaded_file, keyword_column)
