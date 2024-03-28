@@ -13,16 +13,20 @@ def clean_excel_data(uploaded_file, keyword_column):
         else:
             terms_df = pd.read_csv(uploaded_file)
         
-        new_df = (
-            terms_df[[keyword_column, 'Volume']]  # Here, 'Keyword' column is selected
-            .rename(columns={keyword_column: 'query'})
-        )
-        new_df['Volume'] = new_df['Volume'].fillna(0).astype(int)
-        new_df['query'] = new_df['query'].astype(str).str.replace('[^a-zA-Z0-9 ]', '', regex=True)
-        new_df['query_length'] = new_df['query'].apply(len)
-        new_df = new_df[new_df['query_length'] > 3]
-        new_df = new_df.drop(columns=['query_length'])
-        return new_df
+        if keyword_column not in terms_df.columns:
+            st.error(f"Selected keyword column '{keyword_column}' does not exist in the uploaded file. Please select a different column.")
+            return None
+        else:
+            new_df = (
+                terms_df[[keyword_column, 'Volume']]  # Here, 'Keyword' column is selected
+                .rename(columns={keyword_column: 'query'})
+            )
+            new_df['Volume'] = new_df['Volume'].fillna(0).astype(int)
+            new_df['query'] = new_df['query'].astype(str).str.replace('[^a-zA-Z0-9 ]', '', regex=True)
+            new_df['query_length'] = new_df['query'].apply(len)
+            new_df = new_df[new_df['query_length'] > 3]
+            new_df = new_df.drop(columns=['query_length'])
+            return new_df
     else:
         return None
 
@@ -113,62 +117,63 @@ def main():
         uploaded_file = st.file_uploader("Upload CSV file", type=['csv', 'xlsx'])
 
         if uploaded_file is not None:
-            df = clean_excel_data(uploaded_file, 'Keyword')
+            # Dropdown for selecting keyword column
+            keyword_column = st.selectbox("Select the column containing keywords or queries:", ['Select a column'] + list(pd.read_csv(uploaded_file).columns))
 
-            if df is not None:
-                st.write("Data Sample:")
-                st.write(df.head())
+            if keyword_column != 'Select a column':
+                df = clean_excel_data(uploaded_file, keyword_column)
 
-                # Dropdown for selecting keyword column
-                keyword_column = st.selectbox("Select the column containing keywords or queries:", df.columns)
-
-                # Start processing
-                if st.button("Start Processing"):
-                    # Clean data
-                    cleaned_df = clean_excel_data(uploaded_file, keyword_column)
-
-                    st.write("Cleaned Data Sample:")
-                    st.write(cleaned_df.head())
-
-                    # Batch Name
-                    batch_name = st.text_input("Enter batch name:")
+                if df is not None:
+                    st.write("Data Sample:")
+                    st.write(df.head())
 
                     # Start processing
                     if st.button("Start Processing"):
-                        batch_id = create_batch(batch_name, api_key)
-                        st.write("Batch ID:", batch_id)
-                        time.sleep(1)
+                        # Clean data
+                        cleaned_df = clean_excel_data(uploaded_file, keyword_column)
 
-                        add_search_queries(batch_id, cleaned_df, api_key)
-                        st.write('Added Search Queries to the ValueSERP Batch')
-                        time.sleep(1)
+                        st.write("Cleaned Data Sample:")
+                        st.write(cleaned_df.head())
 
-                        start_batch(batch_id, api_key)
-                        st.write('Started the ValueSERP Batch')
-                        st.write('Waiting for SERP Results')
+                        # Batch Name
+                        batch_name = st.text_input("Enter batch name:")
 
-                        result_set = get_result_set(batch_id, api_key)
-                        st.write('SERP Scraping Successful.')
+                        # Start processing
+                        if st.button("Start Processing"):
+                            batch_id = create_batch(batch_name, api_key)
+                            st.write("Batch ID:", batch_id)
+                            time.sleep(1)
 
-                        cleaned_results = clean_search_results(result_set)
-                        st.write('Cleaned Results')
+                            add_search_queries(batch_id, cleaned_df, api_key)
+                            st.write('Added Search Queries to the ValueSERP Batch')
+                            time.sleep(1)
 
-                        merged_df = pd.merge(cleaned_df, cleaned_results, how='left', on='query')
-                        merged_df = merged_df.rename(columns={'query': 'Keyword', 'impressions': 'Volume', 'links': 'URLs'})
+                            start_batch(batch_id, api_key)
+                            st.write('Started the ValueSERP Batch')
+                            st.write('Waiting for SERP Results')
 
-                        clusters_df_cloud = get_clusters_from_api(merged_df)
+                            result_set = get_result_set(batch_id, api_key)
+                            st.write('SERP Scraping Successful.')
 
-                        if clusters_df_cloud is not None:
-                            st.write("Clusters Data:")
-                            st.write(clusters_df_cloud.head())
+                            cleaned_results = clean_search_results(result_set)
+                            st.write('Cleaned Results')
 
-                            # Visualization
-                            st.write("Visualization:")
-                            fig = px.treemap(clusters_df_cloud[clusters_df_cloud['Number of Keywords in Cluster'] > 3],
-                                             path=['Cluster Name', 'Keyword'])
-                            st.plotly_chart(fig)
+                            merged_df = pd.merge(cleaned_df, cleaned_results, how='left', on='query')
+                            merged_df = merged_df.rename(columns={'query': 'Keyword', 'impressions': 'Volume', 'links': 'URLs'})
+
+                            clusters_df_cloud = get_clusters_from_api(merged_df)
+
+                            if clusters_df_cloud is not None:
+                                st.write("Clusters Data:")
+                                st.write(clusters_df_cloud.head())
+
+                                # Visualization
+                                st.write("Visualization:")
+                                fig = px.treemap(clusters_df_cloud[clusters_df_cloud['Number of Keywords in Cluster'] > 3],
+                                                 path=['Cluster Name', 'Keyword'])
+                                st.plotly_chart(fig)
             else:
-                st.warning("Invalid file format. Please upload a CSV or Excel file.")
+                st.warning("Please select a column containing keywords or queries.")
     else:
         st.warning("Please enter your API key.")
 
