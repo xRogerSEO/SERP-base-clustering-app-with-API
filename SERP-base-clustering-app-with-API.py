@@ -5,6 +5,8 @@ import json
 import time
 import plotly.express as px
 
+st.title('SERP Based Clustering APP w/API')
+
 # Function to clean Excel data
 def clean_excel_data(file_path):
     terms_df = pd.read_excel(file_path)
