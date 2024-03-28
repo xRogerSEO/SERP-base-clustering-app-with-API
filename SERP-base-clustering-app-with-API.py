@@ -21,6 +21,20 @@ def clean_excel_data(file_path):
     new_df = new_df.drop(columns=['query_length'])
     return new_df
 
+# Function to create batch
+def create_batch(batch_name, api_key):
+    body = {
+        "name": batch_name,
+        "enabled": True,
+        "schedule_type": "manual",
+        "priority": "highest"
+    }
+
+    api_result = requests.post(f'https://api.valueserp.com/batches?api_key={api_key}', json=body)
+    api_response = api_result.json()
+
+    return api_response['batch']['id']
+
 # Function to start batch
 def start_batch(batch_id, api_key):
     params = {'api_key': str(api_key)}
@@ -84,7 +98,9 @@ def get_clusters_from_api(serp_df, common_num=4):
 
 # Streamlit App
 def main():
-   # File upload section
+    st.title("GSC Queries Race Chart Visualization")
+
+    # File upload section
     uploaded_file = st.file_uploader("Upload CSV file", type=['csv', 'xlsx'])
 
     if uploaded_file is not None:
@@ -105,21 +121,13 @@ def main():
         # Batch Name
         batch_name = st.text_input("Enter batch name:")
 
-        # Search Location
-        search_location = st.text_input("Enter search location (e.g., Chicago, Illinois, USA):")
-
-        # Language & Google Domain
-        gl = st.text_input("Enter Google language code (e.g., en):")
-        hl = st.text_input("Enter Google search language (e.g., us):")
-        google_domain = st.text_input("Enter Google domain (e.g., google.com):")
-
         # Start processing
         if st.button("Start Processing"):
             batch_id = create_batch(batch_name, api_key)
             st.write("Batch ID:", batch_id)
             time.sleep(1)
 
-            add_search_queries(batch_id, cleaned_df, api_key, search_location, gl, hl, google_domain)
+            add_search_queries(batch_id, cleaned_df, api_key)
             st.write('Added Search Queries to the ValueSERP Batch')
             time.sleep(1)
 
