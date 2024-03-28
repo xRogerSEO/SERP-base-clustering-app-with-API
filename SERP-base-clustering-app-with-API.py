@@ -12,25 +12,26 @@ def clean_excel_data(uploaded_file, keyword_column):
             if uploaded_file.name.endswith('xlsx'):
                 terms_df = pd.read_excel(uploaded_file, engine='openpyxl')
             else:
+                # Read CSV directly from uploaded file data
                 terms_df = pd.read_csv(uploaded_file)
+
+            if keyword_column not in terms_df.columns:
+                st.error(f"Selected keyword column '{keyword_column}' does not exist in the uploaded file. Please select a different column.")
+                return None
+            else:
+                new_df = (
+                    terms_df[[keyword_column, 'Volume']]  # Here, 'Keyword' column is selected
+                    .rename(columns={keyword_column: 'query'})
+                )
+                new_df['Volume'] = new_df['Volume'].fillna(0).astype(int)
+                new_df['query'] = new_df['query'].astype(str).str.replace('[^a-zA-Z0-9 ]', '', regex=True)
+                new_df['query_length'] = new_df['query'].apply(len)
+                new_df = new_df[new_df['query_length'] > 3]
+                new_df = new_df.drop(columns=['query_length'])
+                return new_df
         except pd.errors.EmptyDataError:
             st.error("The uploaded file is empty. Please upload a valid CSV file.")
             return None
-        
-        if keyword_column not in terms_df.columns:
-            st.error(f"Selected keyword column '{keyword_column}' does not exist in the uploaded file. Please select a different column.")
-            return None
-        else:
-            new_df = (
-                terms_df[[keyword_column, 'Volume']]  # Here, 'Keyword' column is selected
-                .rename(columns={keyword_column: 'query'})
-            )
-            new_df['Volume'] = new_df['Volume'].fillna(0).astype(int)
-            new_df['query'] = new_df['query'].astype(str).str.replace('[^a-zA-Z0-9 ]', '', regex=True)
-            new_df['query_length'] = new_df['query'].apply(len)
-            new_df = new_df[new_df['query_length'] > 3]
-            new_df = new_df.drop(columns=['query_length'])
-            return new_df
     else:
         return None
 
