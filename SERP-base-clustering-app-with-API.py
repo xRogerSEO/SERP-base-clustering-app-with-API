@@ -110,14 +110,14 @@ def main():
         # Dropdown for selecting keyword column
         keyword_column = st.selectbox("Select the column containing keywords or queries:", df.columns)
 
+        # API Key input
+        api_key = st.text_input("Enter your ValueSERP API key:")
+
         # Clean data
         cleaned_df = clean_excel_data(uploaded_file, keyword_column)
 
         st.write("Cleaned Data Sample:")
         st.write(cleaned_df.head())
-
-        # API Key input
-        api_key = st.text_input("Enter your ValueSERP API key:")
 
         # Batch Name
         batch_name = st.text_input("Enter batch name:")
