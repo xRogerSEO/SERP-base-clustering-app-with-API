@@ -6,11 +6,11 @@ import time
 import plotly.express as px
 
 # Function to clean Excel data
-def clean_excel_data(file_path):
+def clean_excel_data(file_path, keyword_column):
     terms_df = pd.read_excel(file_path)
     new_df = (
-        terms_df[['Keyword', 'Volume']]
-        .rename(columns={'Keyword': 'query'})
+        terms_df[[keyword_column, 'Volume']]  # Here, 'Keyword' column is selected
+        .rename(columns={keyword_column: 'query'})
     )
     new_df['Volume'] = new_df['Volume'].fillna(0).astype(int)
     new_df['query'] = new_df['query'].astype(str).str.replace('[^a-zA-Z0-9 ]', '', regex=True)
@@ -98,9 +98,6 @@ def get_clusters_from_api(serp_df, common_num=4):
 def main():
     st.title("SERP Based Clustering APP w/API")
 
-    # API Key input
-    api_key = st.text_input("Enter your ValueSERP API key:")
-
     # File upload section
     uploaded_file = st.file_uploader("Upload CSV file", type=['csv', 'xlsx'])
 
@@ -110,11 +107,17 @@ def main():
         st.write("Data Sample:")
         st.write(df.head())
 
+        # Dropdown for selecting keyword column
+        keyword_column = st.selectbox("Select the column containing keywords or queries:", df.columns)
+
         # Clean data
-        cleaned_df = clean_excel_data(uploaded_file)
+        cleaned_df = clean_excel_data(uploaded_file, keyword_column)
 
         st.write("Cleaned Data Sample:")
         st.write(cleaned_df.head())
+
+        # API Key input
+        api_key = st.text_input("Enter your ValueSERP API key:")
 
         # Batch Name
         batch_name = st.text_input("Enter batch name:")
