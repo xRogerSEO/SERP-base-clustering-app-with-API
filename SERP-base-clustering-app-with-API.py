@@ -5,8 +5,6 @@ import json
 import time
 import plotly.express as px
 
-st.title('SERP Based Clustering APP w/API')
-
 # Function to clean Excel data
 def clean_excel_data(file_path):
     terms_df = pd.read_excel(file_path)
@@ -98,7 +96,7 @@ def get_clusters_from_api(serp_df, common_num=4):
 
 # Streamlit App
 def main():
-    st.title("GSC Queries Race Chart Visualization")
+    st.title("SERP Based Clustering APP w/API")
 
     # File upload section
     uploaded_file = st.file_uploader("Upload CSV file", type=['csv', 'xlsx'])
